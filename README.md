@@ -1,3 +1,10 @@
+# 个人学习修改版
+**学习自用，请勿乱用售卖或咨询，任何风险后果自负**
+
+添加自用学习ms脚本，借用noesis的命令行接口。  
+py脚本当前新增支持 mhws 公测版动作文件，  
+后面看佬更新正式版底层解析再优化。
+
 # fmt_RE_MESH-Noesis-Plugin
 A plugin for Rich Whitehouse's Noesis to import and export RE Engine meshes, textures and animations
 
