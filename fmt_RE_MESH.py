@@ -28,7 +28,7 @@ bApolloExport				= True					#Enable or disable export of mesh.230612127 from the
 bDD2Export					= True					#Enable or disable export of mesh.231011879 from the export list (and tex.760230703)
 bDRDRExport					= True					#Enable or disable export of mesh.240424828 from the export list (and tex.240606151)
 
-
+bMHWsExport = True
 
 #Mesh Global
 fDefaultMeshScale 			= 100.0 				#Override mesh scale (default is 1.0)
@@ -75,19 +75,22 @@ bForceRootBoneToBone0		= True					#If the root bone is detected as the last bone
 bAddBoneNumbers 			= 2						#Adds bone numbers and colons before bone names to indicate if they are active. 0 = Off, 1 = On, 2 = Auto
 bRotateBonesUpright			= False					#Rotates bones to be upright for editing and then back to normal for exporting
 bReadGroupIds				= True					#Import/Export with the GroupID as the MainMesh number
+bShowMotionIds = False
 
 #Plugin GUI
 iListboxSize  				= 280					#The height of the list box in the plugin's import menu
 
 
-from inc_noesis import *
-from collections import namedtuple
-import noewin
+import copy
 import math
 import os
 import re
-import copy
 import time
+from collections import namedtuple
+
+import noewin
+from inc_noesis import *
+
 
 def registerNoesisTypes():
 
@@ -121,7 +124,7 @@ def registerNoesisTypes():
 	noesis.setHandlerTypeCheck(handle, SCNCheckType)
 	noesis.setHandlerLoadModel(handle, SCNLoadModel)
 	
-	handle = noesis.register("RE Engine MOTLIST [PC]", ".60;.85;.99;.484;.486;.500;.524;.528;.643;.653;.663;.750;.751;.851;.854")
+	handle = noesis.register("RE Engine MOTLIST [PC]", ".60;.85;.99;.484;.486;.500;.524;.528;.643;.653;.663;.750;.751;.851;.854;.959")
 	noesis.setHandlerTypeCheck(handle, motlistCheckType)
 	noesis.setHandlerLoadModel(handle, motlistLoadModel)
 
@@ -262,6 +265,15 @@ def registerNoesisTypes():
 		#noesis.setHandlerTypeCheck(handle, meshCheckType)
 		#noesis.setHandlerWriteModel(handle, meshWriteModel)
 		#addOptions(handle)
+
+	if bMHWsExport:
+		handle = noesis.register("MHWs Texture [PC]", ".240701001")
+		noesis.setHandlerTypeCheck(handle, texCheckType)
+		noesis.setHandlerWriteRGBA(handle, texWriteRGBA)
+		handle = noesis.register("MHWs Mesh", (".240820143"))
+		noesis.setHandlerTypeCheck(handle, meshCheckType)
+		noesis.setHandlerWriteModel(handle, meshWriteModel)
+		addOptions(handle)
 		
 		
 	noesis.logPopup()
@@ -295,6 +307,7 @@ formats = {
 	"AJ_AAT": 		{ "modelExt": ".230612127",  "texExt": ".719230324", "mmtrExt": ".230815080",  "nDir": "stm", "mdfExt": ".mdf2.37", "meshVersion": 3, "mdfVersion": 4, "mlistExt": ".750", "meshMagic":230406984, "motionIDsData":[72,8] },
 	"DD2": 			{ "modelExt": ".231011879",  "texExt": ".760230703", "mmtrExt": ".230815080",  "nDir": "stm", "mdfExt": ".mdf2.40", "meshVersion": 3, "mdfVersion": 4, "mlistExt": ".751", "meshMagic":230517984, "motionIDsData":[72,8] },
 	"DRDR": 		{ "modelExt": ".240424828",  "texExt": ".240606151", "mmtrExt": ".240405143",  "nDir": "stm", "mdfExt": ".mdf2.40", "meshVersion": 3, "mdfVersion": 4, "mlistExt": ".854", "meshMagic":240423829, "motionIDsData":[72,8] },
+	"MHWs": 		{"modelExt": ".240820143",  "texExt": ".760230703", "mmtrExt": ".240718143",  "nDir": "stm", "mdfExt": ".mdf2.45", "meshVersion": 3, "mdfVersion": 4, "mlistExt": ".959", "meshMagic": 240704828, "motionIDsData": [72, 8]},
 }
 
 extToFormat = { #incomplete, just testing
@@ -1393,7 +1406,7 @@ dialogOptions = DialogOptions()
 
 DoubleClickTimer = namedtuple("DoubleClickTimer", "name idx timer")
 
-gamesList = [ "RE7", "RE7RT", "RE2", "RERT", "RE3", "RE4", "RE8", "MHRSunbreak", "DMC5", "SF6", "ReVerse", "ExoPrimal", "AJ_AAT", "DD2", "DRDR" ]
+gamesList = [ "RE7", "RE7RT", "RE2", "RERT", "RE3", "RE4", "RE8", "MHRSunbreak", "DMC5", "SF6", "ReVerse", "ExoPrimal", "AJ_AAT", "DD2", "DRDR", "MHWs" ]
 fullGameNames = [
 	"Resident Evil 7",
 	"Resident Evil 7 RT",
@@ -1409,6 +1422,7 @@ fullGameNames = [
 	"ExoPrimal",
 	"Apollo Justice AAT",
 	"Dragon's Dogma 2",
+    "MHWs",
 	"Dead Rising DR",
 ]
 		
@@ -2153,7 +2167,7 @@ def SCNLoadModel(data, mdlList):
 	fName = rapi.getInputName().upper()
 	guessedName = "RE8" if "RE8" in fName else "RE7" if "RE7" in fName else "RE2" if "RE2" in fName else "RE3" if "RE3" in fName else "RE7" if "RE7" in fName \
 	else "SF6" if "SF6" in fName else "MHRise" if "MHRISE" in fName else "RE4" if "RE4" in fName else "ExoPrimal" if ("EXO" in fName or "EXP" in fName) else "DMC5" if "DMC5" in fName \
-	else "DD2" if "DD2" in fName else "DRDR" if "DRDR" in fName else "AJ_AAT"
+	else "DD2" if "DD2" in fName else "DRDR" if "DRDR" in fName else "MHWs" if "MHWs" in fName else "AJ_AAT"
 	guessedName = guessedName + "RT" if (guessedName + "RT") in fName else guessedName
 	
 	msg = ''.join([name + ", " for name, formatList in formats.items()])
@@ -2488,7 +2502,7 @@ class motFile:
 		nameOffs = bs.readUInt64()
 		self.name = readUnicodeStringAt(bs, nameOffs)
 		self.frameCount = bs.readFloat()
-		self.name += " (" + str(int(self.frameCount)) + " frames)" + motionID
+		# self.name += " (" + str(int(self.frameCount)) + " frames)" + motionID
 		self.blending = bs.readFloat()
 		self.uknFloat0 = bs.readFloat()
 		self.uknFloat0 = bs.readFloat()
@@ -2841,7 +2855,7 @@ class motlistFile:
 			if motAddress and motAddress not in self.pointers and readUIntAt(bs, motAddress+4) == 544501613: # 'mot'
 				self.pointers.append(motAddress)
 				bs.seek(motAddress)
-				mot = motFile(bs.readBytes(bs.getSize()-bs.tell()), self, motAddress, " ID: " + str(self.motionIDs[i] if i in self.motionIDs else ""))
+				mot = motFile(bs.readBytes(bs.getSize()-bs.tell()), self, motAddress, (" ID: " + str(self.motionIDs[i] if i in self.motionIDs else "")) if bShowMotionIds is True else "")
 				self.mots.append(mot)
 		
 	def findBoneHeaders(self):
@@ -2988,7 +3002,7 @@ def setOffsets(ver):
 	bsIndicesOffLocation = 		112 if ver < 3 else 128
 	namesOffsLocation = 		120 if ver < 3 else 144
 	
-	if sGameName == "AJ_AAT" or sGameName == "DD2" or sGameName == "DRDR":
+	if sGameName == "AJ_AAT" or sGameName == "DD2" or sGameName == "DRDR" or sGameName == "MHWs":
 		namesOffsLocation = 136 # on unrigged meshes its still 144
 	#if isExoPrimal:
 	#	nodesIndicesOffsLocation = 104
@@ -3069,6 +3083,9 @@ class meshFile(object):
 		elif (meshVersion == 240423829 or self.path.find(".240424828") != -1): #DD2
 			isMeshVer3 = True
 			sGameName = "DRDR"
+		elif (meshVersion == 240704828 or self.path.find(".240820143") != -1):  # MHWs
+			isMeshVer3 = True
+			sGameName = "MHWs"
 		
 	'''MDF IMPORT ========================================================================================================================================================================'''
 	def createMaterials(self, matCount):
@@ -4434,6 +4451,9 @@ def meshWriteModel(mdl, bs):
 	elif ext.find(".231011879") != -1:
 		sGameName = "DD2"
 		isMeshVer3 = True
+	elif ext.find(".240820143") != -1:
+		sGameName = "MHWs"
+		isMeshVer3 = True
 	elif ext.find(".240424828") != -1:
 		sGameName = "DRDR"
 		isMeshVer3 = True
@@ -4495,7 +4515,7 @@ def meshWriteModel(mdl, bs):
 	extension = os.path.splitext(rapi.getInputName())[1]
 	vertElemCount = 3 
 	
-	if sGameName == "AJ_AAT" or sGameName == "DD2" or sGameName == "DRDR":
+	if sGameName == "AJ_AAT" or sGameName == "DD2" or sGameName == "DRDR" or sGameName == "MHWs":
 		#namesOffsLocation = 136 if bDoSkin else 144
 		isDD2Mesh = True
 
@@ -4687,7 +4707,7 @@ def meshWriteModel(mdl, bs):
 		
 		if isMeshVer3:
 			f.seek(232)
-			if sGameName == "AJ_AAT" or sGameName == "DD2" or sGameName == "DRDR":
+			if sGameName == "AJ_AAT" or sGameName == "DD2" or sGameName == "DRDR" or sGameName == "MHWs":
 				f.seek(f.readUInt64())
 		elif sGameName == "RERT" or sGameName == "ReVerse" or sGameName == "MHRise" or sGameName == "RE8":
 			f.seek(192)
@@ -4817,7 +4837,7 @@ def meshWriteModel(mdl, bs):
 		
 		#print(newMainMeshes)
 		
-		LOD1Offs = 176 if (sGameName == "DD2" or sGameName == "AJ_AAT" or sGameName == "DRDR") else 168 if isMeshVer3 else 128 if (sGameName == "RERT" or sGameName == "RE8" or sGameName == "MHRise") else 136
+		LOD1Offs = 176 if (sGameName == "DD2" or sGameName == "AJ_AAT" or sGameName == "DRDR" or sGameName == "MHWs") else 168 if isMeshVer3 else 128 if (sGameName == "RERT" or sGameName == "RE8" or sGameName == "MHRise") else 136
 		
 		#header:
 		bs.writeUInt(1213416781) #MESH
@@ -4828,7 +4848,7 @@ def meshWriteModel(mdl, bs):
 		
 		if isMeshVer3:
 			bs.writeUByte(3) #flag
-			if sGameName == "DD2" or sGameName == "AJ_AAT" or sGameName == "DRDR":
+			if sGameName == "DD2" or sGameName == "AJ_AAT" or sGameName == "DRDR" or sGameName == "MHWs":
 				bs.writeUByte(130) #solvedOffset
 				bs.writeUShort(84) #uknSF6
 			else:
@@ -4853,7 +4873,7 @@ def meshWriteModel(mdl, bs):
 			bs.writeUInt64(0) #namesOffs
 			bs.writeUInt64(0) #verticesOffset
 			bs.writeUInt64(0) #ukn4/padding
-			if sGameName == "DD2":
+			if sGameName == "DD2" or sGameName == "MHWs":
 				bs.writeUInt64(0) #ukn5/padding
 			
 		else:
