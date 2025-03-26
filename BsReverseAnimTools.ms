@@ -32,6 +32,7 @@ rollout rolMHWsAnimTools "BsReverseAnimTools_v1.0_Bullet.S" height:105 width:305
 	(
 		setdialogpos rolMHWsAnimTools ((getdialogpos rolMHWsAnimTools) + [400,-500])
 		if selCurGameID != undefined and selCurGameID != 0 then ddlCurGames.selection = selCurGameID
+		else selCurGameID = 1
 		fnRefreshMotExt selCurGameID
 		-- print selCurGameID
 	)
@@ -71,36 +72,10 @@ rollout formNoesisCMD "Motlist Anim Importer"
 	local CB_GETCURSEL = 0x0147
 	local CB_SETCURSEL = 0x014E
 	local WM_COMMAND   = 0x0111
-
-	fn fnAutoImportMot =
-	(
-		local hwndRollout = dialogMonitorOps.getWindowHandle()
-		strWinText = uiAccessor.getWindowText hwndRollout
-		if (strWinText != undefined) then 
-		(
-			if (matchpattern strWinText pattern:"*RE Engine*") then 
-			(
-				if UIAccessor.getChildWindows hwndRollout != undefined then 
-				(windowChildren = UIAccessor.getChildWindows hwndRollout)
-				for j in windowChildren do
-				(
-					if ((UIAccessor.GetWindowClassName j == "ComboBox") and (windows.sendmessage j CB_GETCOUNT 0 0)!=0) then 
-					(
-						windows.sendmessage j CB_SETCURSEL idCurSelMot 0
-						windows.sendmessage hwndRollout WM_COMMAND (65536+(UIAccessor.GetWindowResourceID j)) j
-						strSelMot = uiAccessor.getWindowText j
-						print ("输出动作: " + strSelMot)
-					)
-				)
-			)
-			-- UIAccessor.PressButtonByName hwndRollout "Import"
-		)
-		true
-	)
 	
 	fn noesisComponentsFound = (
 		local state = false
-		if doesFileExist noesis_path do (
+		if doesFileExist noesis_path and noesis_path != undefined do (
 			state = true
 		)
 		state
@@ -113,7 +88,7 @@ rollout formNoesisCMD "Motlist Anim Importer"
 			cmd = "undefined"
 		
 		
-		if doesFileExist cmd then (
+		if doesFileExist cmd and cmd != undefined then (
 			local showFbxOptions = chk_showPlugOpt.checked
 			
 			local files = #(cmd)
@@ -142,23 +117,16 @@ rollout formNoesisCMD "Motlist Anim Importer"
 						cmd = cmd + " -fbxmultitake -animoutex .noefbxmulti"
 						substituteString cmd ".fbx" ".noefbxmulti"
 					)
-					-- -- 启用对话框监视器
-					DialogMonitorOPS.Enabled = true
-					DialogMonitorOPS.RegisterNotification fnAutoImportMot id:#importMHWsAnim
 
 					if chk_showCMD.checked then (
 						DOSCommand ("\"" + cmd + " -logfile \"" + outtxt_path + "\"") 
 					) else (
 						HiddenDOSCommand ("\"" + cmd + " -logfile \"" + outtxt_path + "\"") startpath:(getFilenamePath noesis_path) donotwait:false
 					)
-											
-					-- -- 清理监视器
-					DialogMonitorOPS.UnRegisterNotification id:#importMHWsAnim
-					DialogMonitorOPS.Enabled = false
 					
 					format "Import Command:\n%\n" cmd
 					
-					if doesFileExist outtxt_path then (
+					if doesFileExist outtxt_path and outtxt_path != undefined then (
 						local fs = openFile outtxt_path
 						if fs != undefined then (
 							local noesisOutput = "\n"
@@ -203,13 +171,19 @@ rollout formNoesisCMD "Motlist Anim Importer"
 		renderMessageManager.HideWindow()
 	)
 	
-	
 	on formNoesisCMD open do (
-		if doesFileExist noesis_path do (
-			edt_noesis.text = noesis_path
+		if noesis_path != undefined do 
+		(
+			if doesFileExist noesis_path do (
+				edt_noesis.text = noesis_path
+			)
 		)
-		if doesFileExist output_path do (
-			edt_output.text = output_path
+
+		if output_path != undefined do 
+		(
+			if doesFileExist output_path do (
+				edt_output.text = output_path
+			)
 		)
 	)
 		
@@ -225,7 +199,7 @@ rollout formNoesisCMD "Motlist Anim Importer"
 	)
 
 	on btn_output pressed do (
-		cmd = getSavePath caption:"请选择导出动画 FBX 文件路径:" initialDir:(output_path)
+		cmd = getSavePath caption:"请选择导出动画 FBX 文件路径:" initialDir:(if output_path != undefined then output_path else "")
 		if cmd != undefined and cmd != "" do (
 			edt_output.text = output_path = cmd
 		)
@@ -413,7 +387,7 @@ rollout FBXBatchProcessor "Bone Anim FBX Fix"
 	
 	fn processFile inputFile = 
 	(
-		try (
+		-- try (
 			resetMaxFile #noPrompt
 
 			FbxImporterSetParam "Animation" true
@@ -442,11 +416,11 @@ rollout FBXBatchProcessor "Bone Anim FBX Fix"
 			exportFile finalPath #noPrompt selectedOnly:false using:FBXEXP
 			-- saveMaxFile finalMaxPath
 			true
-		)
-		catch (
-			format "处理文件时出错：%\n" (getCurrentException())
-			false
-		)
+		-- )
+		-- catch (
+		-- 	format "处理文件时出错：%\n" (getCurrentException())
+		-- 	false
+		-- )
 	)
 	
 	on btnSelectFolder pressed do
