@@ -7,7 +7,7 @@ global motExt
 global noesis_path
 global output_path
 
-rollout rolMHWsAnimTools "BsReverseAnimTools_v1.0_Bullet.S" height:105 width:305
+rollout rolMHWsAnimTools "BsReverseAnimTools_v1.1_Bullet.S" height:105 width:305
 (
 	local arrGamesName = #("MHWsOBT-怪物猎人荒野公测版","MHWs-怪物猎人荒野","MHRise-怪物猎人崛起","MHRSunbreak-怪物猎人崛起曙光")
 
@@ -160,7 +160,7 @@ rollout formNoesisCMD "Motlist Anim Importer"
 						try(deleteFile fbx_path)catch()
 						delFiles = getfiles ((getFilenamePath fbx_path) + @"\*.noefbxmulti")
 						for f in delFiles do (try(deleteFile f)catch())
-						messageBox "导出分离动画成功，可点击面板打开导出目录查看多个FBX动画！                                            ")
+						print ("导出" + (getFilenamePath cmd) + "分离动画成功，可点击面板打开导出目录查看多个FBX动画！                                            "))
 					
 					if chk_delFBX.checked then 
 						try(deleteFile fbx_path)catch()
@@ -229,7 +229,9 @@ rollout rolMotViewer "Motlist Viewer"
 	editText edtMotlistPath "" text:"" labelOnTop:true height:20 fieldWidth:190 pos:[5,5]
 	button btnOpenMotlistPath "选择" height:20 width:35 pos:[200,5]
 	button btnRefreshFolder "刷新" height:20 width:30 pos:[235,5]
-	ListBox ltbMotlistFiles "" selection:0 height:18 width:260 pos:[5,30]
+	ListBox ltbMotlistFiles "" selection:0 height:15 width:260 pos:[5,30]
+	button btnImportSel "导入或分离选中" height:25 width:125 pos:[5,235]
+	button btnConvertAll "分离列表所有" height:25 width:130 pos:[135,235]
 
 	local arrMotFilesLoaded = #()
 
@@ -303,9 +305,37 @@ rollout rolMotViewer "Motlist Viewer"
 			if formNoesisCMD.noesisComponentsFound() then (
 				motImport = arrMotFilesLoaded[ltbMotlistFiles.selection]
 				formNoesisCMD.Import_MESH motImport undefined
-			) else (messagebox "无法加载 Motlist 文件!")
+			) else (messagebox "无法加载 Motlist 文件!                               ";return false)
 		)
-		else (messagebox "无法加载 Motlist 文件!")
+		else (messagebox "无法加载 Motlist 文件!                               ")
+	)
+
+	on btnImportSel pressed do
+	(
+		selID = ltbMotlistFiles.selection
+		if selID != 0 and (doesFileExist arrMotFilesLoaded[selID]) then
+		(
+			if formNoesisCMD.noesisComponentsFound() then (
+				motImport = arrMotFilesLoaded[ltbMotlistFiles.selection]
+				formNoesisCMD.Import_MESH motImport undefined
+			) else (messagebox "无法加载 Motlist 文件!                               ";return false)
+		)
+		else (messagebox "无法加载 Motlist 文件!                               ")
+	)
+
+	on btnConvertAll pressed do
+	(
+		if formNoesisCMD.chk_noefbxmulti.checked then 
+		(
+			for i in arrMotFilesLoaded where arrMotFilesLoaded.count != 0 do
+			(
+				if formNoesisCMD.noesisComponentsFound() then (
+					if doesFileExist i do (formNoesisCMD.Import_MESH i undefined)
+				) else (messagebox "无法加载 Motlist 文件!                               ";return false)
+			)
+			messageBox "导出列表所有分离动画成功，可点击面板打开导出目录查看多个FBX动画！                                                      "
+		)
+		else (messagebox "批量操作仅支持【导出分离动画片断】!请勾选后重试!                               ")
 	)
 
 	on btnOpenMotlistPath pressed do (
