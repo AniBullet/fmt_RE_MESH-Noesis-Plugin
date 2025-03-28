@@ -6,10 +6,11 @@ global selCurGameID
 global motExt
 global noesis_path
 global output_path
+global arrMotFilesLoaded
 
-rollout rolMHWsAnimTools "BsReverseAnimTools_v1.1_Bullet.S" height:105 width:305
+rollout rolMHWsAnimTools "BsReverseAnimTools_v1.2_Bullet.S" height:105 width:305
 (
-	local arrGamesName = #("MHWsOBT-怪物猎人荒野公测版","MHWs-怪物猎人荒野","MHRise-怪物猎人崛起","MHRSunbreak-怪物猎人崛起曙光")
+	local arrGamesName = #("MHWsOBT-怪物猎人荒野公测版","MHWs-怪物猎人荒野正式版","MHRise-怪物猎人崛起","MHRSunbreak-怪物猎人崛起曙光")
 
 	label lblSelectGameMode "请选择目标游戏：" pos:[12,8] width:80
 	dropdownlist ddlCurGames "" items:arrGamesName pos:[100,5] width:190
@@ -233,20 +234,31 @@ rollout rolMotViewer "Motlist Viewer"
 	button btnImportSel "导入或分离选中" height:25 width:125 pos:[5,235]
 	button btnConvertAll "分离列表所有" height:25 width:130 pos:[135,235]
 
-	local arrMotFilesLoaded = #()
+	function GetMotFilesRecursive root pattern =
+	(        
+		dir_array = GetDirectories (root+"\*")
+		
+		if dir_array.count != 0 then
+		(
+			for d in dir_array do
+				join dir_array (GetDirectories (d+"*"))    
+		)
+		else dir_array = #(root)
+		
+		my_files = #()                
+		
+		for f in dir_array do
+			join my_files (getFiles (f + @"\" + pattern))
+			
+		my_files
+	)
 
-	fn GetFilesRecursive root pattern =
-    (
-        dir_array = GetDirectories (root+"\*")
-        for d in dir_array do
-            join dir_array (GetDirectories (d+"*"))    
-        
-        my_files = #()                
-        for f in dir_array do
-            join my_files (getFiles (f + pattern))
-                
-        my_files
-    )
+	fn getFilesequenceFile f &base &digits = 
+	(
+		f = getFilenameFile f
+		base = trimRight f "0123456789"
+		digits = subString f (base.count + 1) -1
+	)
 
 	fn fnPseudoNaturalSort a b =  --文件名排序新方法--https://forums.cgsociety.org/t/sorting-filenames/1219205/4
 	(
@@ -268,16 +280,16 @@ rollout rolMotViewer "Motlist Viewer"
 		)
 	)
 
-	fn fnRefreshMotFile =
+	fn fnRefreshMotFiles =
 	(
 		if (edtMotlistPath.text != undefined) and (edtMotlistPath.text != "") then 
         (
-            arrMotFIles = (getFilesRecursive edtMotlistPath.text (@"\*" + motExt))
-			qsort arrMotFIles fnPseudoNaturalSort
-			ltbMotlistFiles.items = for i in arrMotFIles collect ((getfilenamefile i) + motExt)
-			arrMotFilesLoaded = arrMotFIles
+            arrMotFilesLoaded = (rolMotViewer.GetMotFilesRecursive rolMotViewer.edtMotlistPath.text (@"*" + motExt))
+			qsort arrMotFilesLoaded rolMotViewer.fnPseudoNaturalSort
+			rolMotViewer.ltbMotlistFiles.items = for i in arrMotFilesLoaded collect ((getfilenamefile i) + motExt)
 			if arrMotFilesLoaded.count == 0 then (messagebox"请确认置顶目标游戏选择正确!                                         ")
-        )
+			arrMotFilesLoaded
+		)
 	)
 
 	on rolMotViewer open do
@@ -285,13 +297,13 @@ rollout rolMotViewer "Motlist Viewer"
 		if motPath != undefined do 
 		(
 			if doesFileExist motPath do (
-				edtMotlistPath.text = motPath
-				rolMotViewer.fnRefreshMotFile()
+				rolMotViewer.edtMotlistPath.text = motPath
+				rolMotViewer.fnRefreshMotFiles()
 			)
 		)
 	)
 
-	on btnRefreshFolder pressed do (fnRefreshMotFile())
+	on btnRefreshFolder pressed do (fnRefreshMotFiles())
 
 	on ltbMotlistFiles rightclick id do
 	(
@@ -342,7 +354,7 @@ rollout rolMotViewer "Motlist Viewer"
 		path = getSavePath caption:"请选择希望加载的 Motlist 根目录:" initialDir:(if motPath != undefined then motPath else "")
 		if path != undefined and path != "" do (
 			edtMotlistPath.text = motPath = path
-			fnRefreshMotFile()
+			fnRefreshMotFiles()
 		)
 	)
 	
