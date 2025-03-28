@@ -5,6 +5,8 @@
 py脚本当前新增支持 mhws 公测版动作文件，  
 后面看佬更新正式版底层解析再优化。
 
+Wiki：https://github.com/AniBullet/fmt_RE_MESH-Noesis-Plugin-BulletS/wiki
+
 # fmt_RE_MESH-Noesis-Plugin
 A plugin for Rich Whitehouse's Noesis to import and export RE Engine meshes, textures and animations
 
@@ -14,7 +16,7 @@ A plugin for Rich Whitehouse's Noesis to import and export RE Engine meshes, tex
 - Resident Evil 4 Remake
 - Resident Evil 7 (Ray Tracing)
 - Resident Evil 8
-- Devil May Cry 5
+- Devil5月Cry 5
 - Monster Hunter Rise
 - Street Fighter 6
 - ExoPrimal
