@@ -1422,8 +1422,8 @@ fullGameNames = [
 	"ExoPrimal",
 	"Apollo Justice AAT",
 	"Dragon's Dogma 2",
-    "MHWs",
 	"Dead Rising DR",
+	"MHWs",
 ]
 		
 class openOptionsDialogImportWindow:
@@ -1625,7 +1625,7 @@ class openOptionsDialogImportWindow:
 			self.localBox.addString(name)
 		self.localBox.selectString("Local Folder")
 		self.localIdx = self.localBox.getSelectionIndex()
-
+	
 	def checkLoadTexCheckbox(self, noeWnd, controlId, wParam, lParam):
 		dialogOptions.doLoadTex = not dialogOptions.doLoadTex
 		self.loadTexCheckbox.setChecked(dialogOptions.doLoadTex)
@@ -1810,7 +1810,7 @@ class openOptionsDialogImportWindow:
 			self.setLocalBox(self.localBox)
 			
 			self.noeWnd.doModal()
-
+	
 	def createMeshWindow(self, width=dialogOptions.width, height=dialogOptions.height):
 		
 		if self.create(width, height):
@@ -2090,7 +2090,7 @@ def UVSLoadModel(data, mdlList):
 					aspectRatios[len(aspectRatios)-1] = (noetex.width / noetex.height, 1)
 					noetex.name = matName
 					uvsMatList.append(NoeMaterial(matName, texFile)) 
-
+	
 	bs.seek(sequencePtr)
 	
 	for i in range(sequenceNum):
@@ -2945,22 +2945,8 @@ def motlistLoadModel(data, mdlList):
 	
 	dialogOptions.motDialog = None
 	motlist = motlistFile(data, rapi.getInputName())
-	
-	# 创建对话框但不显示
 	mlDialog = openOptionsDialogImportWindow(None, None, {"motlist":motlist, "isMotlist":True})
-	
-	# 不调用createMotlistWindow()显示窗口，而是直接初始化必要的数据
-	mlDialog.motItems = [mot.name for mot in motlist.mots]
-	if mlDialog.motItems:
-		mlDialog.motItems.insert(0, "[ALL] - " + motlist.name)
-	mlDialog.pak = motlist
-	mlDialog.noeWnd = None
-	
-	# 自动选择第一个item (ALL)
-	if mlDialog.motItems and len(mlDialog.motItems) > 0:
-		mlDialog.loadItems = [mlDialog.motItems[0]]  # 选择第一个item (ALL)
-		mlDialog.fullLoadItems = [mlDialog.pak.path]
-		mlDialog.isOpen = False
+	mlDialog.createMotlistWindow()
 	
 	mdl = NoeModel()
 	
@@ -2970,14 +2956,7 @@ def motlistLoadModel(data, mdlList):
 		bones = list(mdl.bones)
 		mdlBoneNames = [bone.name.lower() for bone in bones]
 		sortedMlists = []
-		
-		# 处理ALL选项
-		if len(mlDialog.loadItems) > 0 and mlDialog.loadItems[0].startswith("[ALL]"):
-			# 添加所有动作
-			mlDialog.loadItems = mlDialog.motItems[1:]  # 跳过ALL选项，添加所有其他动作
-			mlDialog.fullLoadItems = [mlDialog.pak.path] * len(mlDialog.loadItems)
-		
-		for mlist in [mlDialog.loadedMlists[path] for path in mlDialog.fullLoadItems] if mlDialog.loadedMlists else [motlist]:
+		for mlist in [mlDialog.loadedMlists[path] for path in mlDialog.fullLoadItems]:
 			if mlist not in sortedMlists:
 				sortedMlists.append(mlist)
 		for mlist in sortedMlists:
@@ -4435,7 +4414,7 @@ def meshWriteModel(mdl, bs):
 				showOptionsDialog()
 		
 	print ("		----" + Version + " by alphaZomega----\nOpen fmt_RE_MESH.py in your Noesis plugins folder to change global exporter options.\nExport Options:\n Input these options in the `Advanced Options` field to use them, or use in CLI mode\n -flip  =  OpenGL / flipped handedness (fixes seams and inverted lighting on some models)\n -bones = save new skeleton from Noesis to the MESH file\n -bonenumbers = Export with bone numbers, to save a new bone map\n -meshfile [filename]= Input the location of a [filename] to inject that file\n -noprompt = Do not show any prompts\n -rewrite = save new MainMesh and SubMesh order (also saves bones)\n -vfx = Export as a VFX mesh\n -b = Batch conversion mode\n -adv = Show Advanced Options dialog window\n") #\n -lod = export with additional LODGroups") # 
-
+	
 	ext = os.path.splitext(rapi.getOutputName())[1]
 	RERTBytes = 0
 	
@@ -4521,7 +4500,7 @@ def meshWriteModel(mdl, bs):
 		bonesOffs = readUIntAt(f, bonesOffsLocation)
 		if bonesOffs > 0:
 			bDoSkin = True
-
+	
 	if not bReWrite:
 		if newMeshName != None:
 			print("Source Mesh:\n", newMeshName)
@@ -4755,7 +4734,7 @@ def meshWriteModel(mdl, bs):
 			for mmc in range(mainmeshCount):
 				f.seek(meshOffsets[mmc])
 				meshVertexInfo.append([f.readUByte(), f.readUByte(), f.readUShort(), f.readUInt(), f.readUInt(), f.readUInt()])
-				for smc in range(meshVertexInfo[len(meshVertexInfo)-1][1]):
+				for smc in range(meshVertexInfo[mmc][1]):
 					matID = f.readUInt() + 1
 					bFind = 0
 					sourceGroupID = meshVertexInfo[len(meshVertexInfo)-1][0] if bReadGroupIds else (mmc+1)
@@ -5152,7 +5131,7 @@ def meshWriteModel(mdl, bs):
 			names.append(materialNames[i])
 		if bDoSkin:
 			for i in range(len(bonesList)): 
-				bs.writeString(bonesList[i]) 
+				bs.writeString(bonesList[i])
 				names.append(bonesList[i]) 
 		padToNextLine(bs)
 		
@@ -5241,7 +5220,7 @@ def meshWriteModel(mdl, bs):
 	elif not bReWrite:
 		bs.writeBytes(f.readBytes(vertBuffOffs)) #copy to vertex buffer header
 		newVertBuffHdrOffs = bs.tell()
-
+	
 	if bDoSkin:
 		skinBoneMapNames = []
 		for b in range(len(boneRemapTable)):

@@ -8,7 +8,7 @@ global noesis_path
 global output_path
 global arrMotFilesLoaded
 
-rollout rolMHWsAnimTools "BsReverseAnimTools_v1.2_Bullet.S" height:105 width:305
+rollout rolMHWsAnimTools "BsReverseAnimTools_v1.3_Bullet.S" height:105 width:305
 (
 	local arrGamesName = #("MHWsOBT-怪物猎人荒野公测版","MHWs-怪物猎人荒野正式版","MHRise-怪物猎人崛起","MHRSunbreak-怪物猎人崛起曙光")
 
@@ -38,12 +38,17 @@ rollout rolMHWsAnimTools "BsReverseAnimTools_v1.2_Bullet.S" height:105 width:305
 		-- print selCurGameID
 	)
 
-	on ddlCurGames selected id do (selCurGameID = id;fnRefreshMotExt selCurGameID)
+	on ddlCurGames selected id do 
+	(
+		selCurGameID = id
+		fnRefreshMotExt selCurGameID
+		rolMotViewer.fnRefreshMotFiles()
+	)
 )
 
 rollout formNoesisCMD "Motlist Anim Importer"
 (
-	on formNoesisCMD rolledUp state do (if not state then rolMHWsAnimTools.height -= 320 else rolMHWsAnimTools.height += 320)
+	on formNoesisCMD rolledUp state do (if not state then rolMHWsAnimTools.height -= 340 else rolMHWsAnimTools.height += 340)
 	
 	group "Import" (
 		button btn_import "Import MHWs Animation" width:230 align:#center
@@ -52,6 +57,7 @@ rollout formNoesisCMD "Motlist Anim Importer"
 		checkbox chk_noefbxmulti "导出分离动画片断 | noefbxmulti" checked:false align:#left enabled:true
 	)
 	group "Config" (
+		checkbox chk_OnlyAnim "仅导入更新动画 | Only Update Anim" checked:false align:#left
 		checkbox chk_showPlugOpt  "显示FBX窗口 | Show FBX Options" checked:false align:#left
 		checkbox chk_delFBX  "删除转换的FBX | Delete FBX Files" checked:false align:#left
 		checkbox chk_showCMD  "显示调试窗口 | Show Console" checked:false align:#left enabled:true
@@ -76,8 +82,11 @@ rollout formNoesisCMD "Motlist Anim Importer"
 	
 	fn noesisComponentsFound = (
 		local state = false
-		if doesFileExist noesis_path and noesis_path != undefined do (
-			state = true
+		if noesis_path != undefined do 
+		(
+			if doesFileExist noesis_path do (
+				state = true
+			)
 		)
 		state
 	)
@@ -140,6 +149,9 @@ rollout formNoesisCMD "Motlist Anim Importer"
 								return false
 						)
 					)
+
+					if chk_OnlyAnim.checked then (FbxImporterSetParam "Mode" #exmerge)
+					else (FbxImporterSetParam "Mode" #create)
 					FbxImporterSetParam "Animation" true
 					FbxImporterSetParam "FillTimeline" true
 
@@ -217,9 +229,14 @@ rollout formNoesisCMD "Motlist Anim Importer"
 	
 	on btn_import pressed do (
 		if noesisComponentsFound() then (
-			motImport = getOpenFileName types:"MHWs MOTLIST|*.992;*.959;*.60;*.85;*.99;*.484;*.486;*.500;*.524;*.528;*.643;*.653;*.663;*.750;*.751;*.851;*.854|All|*.*|"
+			motImport = getOpenFileName types:("MOTLIST|*" + motExt + "|All|*.*|")
 			Import_MESH motImport undefined
 		) else (messagebox "无法定位 Noesis 文件!")
+	)
+	
+	on chk_OnlyAnim changed state do 
+	(
+		chk_resetScene.state = not state
 	)
 )
 

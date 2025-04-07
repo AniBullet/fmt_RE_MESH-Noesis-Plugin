@@ -1422,8 +1422,8 @@ fullGameNames = [
 	"ExoPrimal",
 	"Apollo Justice AAT",
 	"Dragon's Dogma 2",
-    "MHWs",
 	"Dead Rising DR",
+    "MHWs",
 ]
 		
 class openOptionsDialogImportWindow:
