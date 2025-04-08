@@ -2,6 +2,7 @@
 **学习自用，请勿乱用售卖或咨询，任何风险后果自负**
 
 添加自用学习ms脚本，借用noesis的命令行接口。  
+（ ms脚本迁移至 [Motion Reverse](https://github.com/AniBullet/MotionReverse/blob/main/ms/RE_AnimTools_BulletS.ms) ）  
 py脚本当前新增支持 mhws 公测版动作文件，  
 后面看佬更新正式版底层解析再优化。
 
